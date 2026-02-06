@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Калькулятор фасада по фото (MVP)</title>
+    <style>
+      :root { font-family: Inter, system-ui, Arial, sans-serif; }
+      body { margin: 0; background:#f5f7fb; color:#1a2330; }
+      .wrap { max-width: 1200px; margin: 24px auto; padding: 0 16px; }
+      h1 { margin-bottom: 8px; }
+      .grid { display:grid; grid-template-columns: 340px 1fr; gap:16px; }
+      .panel { background:#fff; border-radius:12px; padding:14px; box-shadow: 0 2px 10px rgba(13,38,76,.08); }
+      .row { margin-bottom: 10px; }
+      label { font-size: 13px; display:block; margin-bottom: 4px; }
+      input, button, select { width:100%; padding:8px; border:1px solid #ccd4e3; border-radius:8px; box-sizing:border-box; }
+      button { background:#2059ff; color:#fff; cursor:pointer; border:none; margin-top:4px; }
+      button.secondary { background:#e8eefc; color:#10308d; }
+      button.warn { background:#b02a37; }
+      .toolbar { display:grid; grid-template-columns: repeat(2,1fr); gap:8px; }
+      .canvas-box { background:#fff; border-radius:12px; padding:10px; box-shadow:0 2px 10px rgba(13,38,76,.08); }
+      canvas { width:100%; border:1px solid #d6deec; border-radius:10px; background:#fafcff; touch-action:none; }
+      .small { font-size:12px; color:#5a6b87; }
+      .res { line-height:1.5; font-size:14px; }
+      .chip { display:inline-block; padding:2px 8px; border-radius:999px; background:#edf2ff; color:#1f3f9f; margin-right:6px; margin-top:4px; }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Калькулятор фасадов по фото</h1>
+      <p class="small">MVP: загрузите фото, задайте габариты стороны (ширина/высота), обведите фасад и вырезы (окна/двери), получите площадь, кассеты и стоимость.</p>
+      <div class="grid">
+        <div class="panel">
+          <div class="row">
+            <label>Фото фасада</label>
+            <input id="photoInput" type="file" accept="image/*" />
+          </div>
+          <div class="row">
+            <label>Ширина стороны, м</label>
+            <input id="realWidth" type="number" min="0" step="0.01" value="12" />
+          </div>
+          <div class="row">
+            <label>Высота стороны, м</label>
+            <input id="realHeight" type="number" min="0" step="0.01" value="9" />
+          </div>
+
+          <div class="row">
+            <label>Режим разметки</label>
+            <select id="modeSelect">
+              <option value="facade">Контур фасада</option>
+              <option value="exclusion">Вырез (окно/дверь)</option>
+            </select>
+          </div>
+          <div class="toolbar row">
+            <button id="finishPolygon">Завершить полигон</button>
+            <button id="undoPoint" class="secondary">Отменить точку</button>
+            <button id="clearCurrent" class="secondary">Очистить текущий</button>
+            <button id="clearAll" class="warn">Сбросить всё</button>
+          </div>
+
+          <hr />
+          <div class="row">
+            <label>Полезная площадь кассеты, м²</label>
+            <input id="cassetteArea" type="number" min="0" step="0.001" value="0.72" />
+          </div>
+          <div class="row">
+            <label>Запас, %</label>
+            <input id="reserve" type="number" min="0" step="0.1" value="7" />
+          </div>
+          <div class="row">
+            <label>Цена кассеты, ₽/шт</label>
+            <input id="cassettePrice" type="number" min="0" step="1" value="1450" />
+          </div>
+          <div class="row">
+            <label>Подсистема, ₽/м²</label>
+            <input id="subsystemPrice" type="number" min="0" step="1" value="1600" />
+          </div>
+          <div class="row">
+            <label>Монтаж, ₽/м²</label>
+            <input id="installPrice" type="number" min="0" step="1" value="2200" />
+          </div>
+          <div class="row">
+            <label>Доп. расходы, ₽</label>
+            <input id="extraCost" type="number" min="0" step="1" value="0" />
+          </div>
+        </div>
+
+        <div class="canvas-box">
+          <canvas id="canvas" width="900" height="560"></canvas>
+          <div id="status" class="small">Кликните по изображению, чтобы ставить точки полигона.</div>
+          <div id="result" class="res"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      const state = {
+        mode: 'facade',
+        current: [],
+        facade: null,
+        exclusions: [],
+        imgLoaded: false
+      };
+
+      const id = (x) => document.getElementById(x);
+      const modeSelect = id('modeSelect');
+      const statusEl = id('status');
+      const resultEl = id('result');
+
+      function polygonArea(points) {
+        if (!points || points.length < 3) return 0;
+        let sum = 0;
+        for (let i = 0; i < points.length; i++) {
+          const a = points[i];
+          const b = points[(i + 1) % points.length];
+          sum += a.x * b.y - b.x * a.y;
+        }
+        return Math.abs(sum) / 2;
+      }
+
+      function canvasScale() {
+        const w = Number(id('realWidth').value) || 0;
+        const h = Number(id('realHeight').value) || 0;
+        return { sx: w / canvas.width, sy: h / canvas.height };
+      }
+
+      function pixelAreaToM2(pxArea) {
+        const { sx, sy } = canvasScale();
+        return pxArea * sx * sy;
+      }
+
+      function drawPolygon(points, color, fillAlpha = 0.18, closed = true) {
+        if (!points.length) return;
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+        if (closed && points.length >= 3) ctx.closePath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        if (closed && points.length >= 3) {
+          ctx.fillStyle = color + Math.floor(fillAlpha * 255).toString(16).padStart(2, '0');
+          ctx.fill();
+        }
+
+        points.forEach((p, idx) => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = '#fff';
+          ctx.fill();
+          ctx.strokeStyle = color;
+          ctx.stroke();
+          ctx.font = '11px sans-serif';
+          ctx.fillStyle = color;
+          ctx.fillText(String(idx + 1), p.x + 6, p.y - 6);
+        });
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (state.imgLoaded) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        }
+
+        if (state.facade) drawPolygon(state.facade, '#2059ff');
+        state.exclusions.forEach(ex => drawPolygon(ex, '#cc2433'));
+        drawPolygon(state.current, state.mode === 'facade' ? '#2059ff' : '#cc2433', 0.06, false);
+
+        calculate();
+      }
+
+      function calculate() {
+        const facadePx = polygonArea(state.facade);
+        const cutPx = state.exclusions.reduce((s, ex) => s + polygonArea(ex), 0);
+        const netPx = Math.max(0, facadePx - cutPx);
+
+        const facadeM2 = pixelAreaToM2(facadePx);
+        const cutM2 = pixelAreaToM2(cutPx);
+        const netM2 = pixelAreaToM2(netPx);
+
+        const cassetteArea = Number(id('cassetteArea').value) || 0;
+        const reserve = Number(id('reserve').value) || 0;
+        const n = cassetteArea > 0 ? Math.ceil((netM2 * (1 + reserve / 100)) / cassetteArea) : 0;
+
+        const cassetteCost = n * (Number(id('cassettePrice').value) || 0);
+        const subsystemCost = netM2 * (Number(id('subsystemPrice').value) || 0);
+        const installCost = netM2 * (Number(id('installPrice').value) || 0);
+        const extraCost = Number(id('extraCost').value) || 0;
+        const total = cassetteCost + subsystemCost + installCost + extraCost;
+
+        resultEl.innerHTML = `
+          <div><span class="chip">Площадь фасада: <b>${facadeM2.toFixed(2)} м²</b></span><span class="chip">Вырезы: <b>${cutM2.toFixed(2)} м²</b></span><span class="chip">Чистая: <b>${netM2.toFixed(2)} м²</b></span></div>
+          <div><span class="chip">Кассет: <b>${n} шт</b></span><span class="chip">Стоимость кассет: <b>${cassetteCost.toLocaleString('ru-RU')} ₽</b></span></div>
+          <div><span class="chip">Подсистема: <b>${subsystemCost.toLocaleString('ru-RU')} ₽</b></span><span class="chip">Монтаж: <b>${installCost.toLocaleString('ru-RU')} ₽</b></span></div>
+          <div><span class="chip">ИТОГО: <b>${total.toLocaleString('ru-RU')} ₽</b></span></div>
+        `;
+      }
+
+      function setStatus(text) { statusEl.textContent = text; }
+
+      canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+        state.current.push({ x, y });
+        setStatus(`Режим: ${state.mode === 'facade' ? 'контур фасада' : 'вырез'} | точек: ${state.current.length}`);
+        render();
+      });
+
+      id('photoInput').addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => { img.src = reader.result; };
+        reader.readAsDataURL(file);
+      });
+
+      img.onload = () => {
+        state.imgLoaded = true;
+        setStatus('Фото загружено. Отметьте контур фасада минимум 3 точками и нажмите "Завершить полигон".');
+        render();
+      };
+
+      modeSelect.addEventListener('change', () => {
+        state.mode = modeSelect.value;
+        state.current = [];
+        setStatus(`Режим переключен: ${state.mode === 'facade' ? 'контур фасада' : 'вырез'}.`);
+        render();
+      });
+
+      id('finishPolygon').addEventListener('click', () => {
+        if (state.current.length < 3) return setStatus('Нужно минимум 3 точки.');
+        if (state.mode === 'facade') {
+          state.facade = [...state.current];
+          setStatus('Контур фасада сохранен. Теперь можно добавлять вырезы.');
+        } else {
+          state.exclusions.push([...state.current]);
+          setStatus(`Вырез добавлен. Всего вырезов: ${state.exclusions.length}.`);
+        }
+        state.current = [];
+        render();
+      });
+
+      id('undoPoint').addEventListener('click', () => {
+        state.current.pop();
+        render();
+      });
+
+      id('clearCurrent').addEventListener('click', () => {
+        state.current = [];
+        render();
+      });
+
+      id('clearAll').addEventListener('click', () => {
+        state.current = [];
+        state.facade = null;
+        state.exclusions = [];
+        setStatus('Разметка очищена.');
+        render();
+      });
+
+      ['realWidth', 'realHeight', 'cassetteArea', 'reserve', 'cassettePrice', 'subsystemPrice', 'installPrice', 'extraCost']
+        .forEach(k => id(k).addEventListener('input', render));
+
+      render();
+    </script>
+  </body>
+</html>
