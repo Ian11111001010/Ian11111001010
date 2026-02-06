@@ -1,0 +1,7 @@
+services:
+  facade-calculator:
+    build: .
+    container_name: facade-calculator
+    ports:
+      - "8080:80"
+    restart: unless-stopped
