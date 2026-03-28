@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ГК РЕМЕСЛО | Ваш проект в работе</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Slab:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ========================================
+           CSS VARIABLES - PALETTE
+           ======================================== */
+        :root {
+            /* Navy Palette */
+            --navy-dark: #0F1D33;
+            --navy-primary: #1C2E4A;
+            --navy-secondary: #2A4266;
+            
+            /* Copper Palette */
+            --copper-primary: #D97722;
+            --copper-hover: #E8934A;
+            
+            /* Neutrals */
+            --text-primary: #F0EDE8;
+            --text-secondary: #A8B4C4;
+            
+            /* Spacing */
+            --section-padding: 120px;
+            --container-max: 1400px;
+            
+            /* Typography */
+            --font-display: 'Roboto Slab', Georgia, serif;
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        /* ========================================
+           RESET & BASE
+           ======================================== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--navy-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* Hide default cursor */
+        @media (pointer: fine) {
+            body {
+                cursor: none;
+            }
+        }
+
+        a, button {
+            cursor: none;
+        }
+
+        @media (pointer: coarse) {
+            body, a, button {
+                cursor: auto;
+            }
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* ========================================
+           CUSTOM CURSOR
+           ======================================== */
+        .cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--copper-primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s ease, height 0.3s ease, background-color 0.3s ease;
+            mix-blend-mode: difference;
+        }
+
+        .cursor.hovered {
+            width: 40px;
+            height: 40px;
+            background-color: var(--copper-primary);
+            opacity: 0.5;
+        }
+
+        .cursor-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .cursor.hovered .cursor-text {
+            opacity: 1;
+        }
+
+        /* ========================================
+           GRAIN TEXTURE
+           ======================================== */
+        .grain-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.04;
+        }
+
+        .grain-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ========================================
+           CONTAINER
+           ======================================== */
+        .container {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ========================================
+           TYPOGRAPHY
+           ======================================== */
+        h1, h2, h3, h4 {
+            font-family: var(--font-display);
+            font-weight: 400;
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+        }
+
+        h2 {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+        }
+
+        h3 {
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+        }
+
+        p {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+        }
+
+        .label {
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--copper-primary);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .text-copper {
+            color: var(--copper-primary);
+        }
+
+        /* ========================================
+           HERO SECTION
+           ======================================== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(180deg, var(--navy-dark) 0%, var(--navy-primary) 100%);
+            padding: var(--section-padding) 0;
+        }
+
+        .hero-content {
+            text-align: center;
+            max-width: 900px;
+        }
+
+        .hero-label {
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--copper-primary);
+            margin-bottom: 2rem;
+            display: inline-block;
+        }
+
+        .hero-title {
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .hero-title-line {
+            display: block;
+            overflow: hidden;
+        }
+
+        .hero-title-char {
+            display: inline-block;
+            transform: translateY(100%);
+            opacity: 0;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ========================================
+           PROGRESS TRACKER
+           ======================================== */
+        .progress-tracker {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            opacity: 0.4;
+            transition: opacity 0.3s ease;
+        }
+
+        .progress-step.active {
+            opacity: 1;
+        }
+
+        .progress-step.completed {
+            opacity: 1;
+        }
+
+        .progress-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--copper-primary);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.completed .progress-indicator {
+            background-color: var(--copper-primary);
+        }
+
+        .progress-step.active .progress-indicator {
+            background-color: var(--copper-primary);
+            box-shadow: 0 0 20px rgba(217, 119, 34, 0.4);
+        }
+
+        .progress-checkmark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 8px;
+            height: 5px;
+            border-left: 2px solid var(--navy-dark);
+            border-bottom: 2px solid var(--navy-dark);
+            transform-origin: center;
+            transition: transform 0.3s ease;
+        }
+
+        .progress-step.completed .progress-checkmark {
+            transform: translate(-50%, -50%) rotate(-45deg) scale(1);
+        }
+
+        .progress-label {
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .progress-step.active .progress-label,
+        .progress-step.completed .progress-label {
+            color: var(--text-primary);
+        }
+
+        .progress-arrow {
+            color: var(--navy-secondary);
+            font-size: 1.25rem;
+        }
+
+        .progress-step.completed + .progress-arrow,
+        .progress-step.active + .progress-arrow {
+            color: var(--copper-primary);
+        }
+
+        /* ========================================
+           MANAGER CARD
+           ======================================== */
+        .manager-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(42, 66, 102, 0.3);
+            padding: 1rem 1.5rem;
+            border-radius: 100px;
+            margin-top: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(217, 119, 34, 0.2);
+        }
+
+        .manager-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--copper-primary);
+        }
+
+        .manager-info {
+            text-align: left;
+        }
+
+        .manager-name {
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: block;
+        }
+
+        .manager-role {
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: block;
+        }
+
+        .manager-contact {
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            color: var(--copper-primary);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+            transition: color 0.3s ease;
+        }
+
+        .manager-contact:hover {
+            color: var(--copper-hover);
+        }
+
+        /* ========================================
+           EXPECTED DATE
+           ======================================== */
+        .expected-date {
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: rgba(217, 119, 34, 0.1);
+            border: 1px solid rgba(217, 119, 34, 0.3);
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .expected-date-label {
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--copper-primary);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .expected-date-value {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* ========================================
+           SCROLL INDICATOR
+           ======================================== */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            opacity: 0.6;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            40% {
+                transform: translateX(-50%) translateY(-10px);
+            }
+            60% {
+                transform: translateX(-50%) translateY(-5px);
+            }
+        }
+
+        .scroll-indicator-text {
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-secondary);
+        }
+
+        .scroll-line {
+            width: 1px;
+            height: 60px;
+            background: linear-gradient(180deg, var(--copper-primary) 0%, transparent 100%);
+        }
+
+        /* ========================================
+           ACCENT LINE
+           ======================================== */
+        .accent-line {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: var(--copper-primary);
+        }
+
+        /* ========================================
+           RESPONSIVE
+           ======================================== */
+        @media (max-width: 768px) {
+            :root {
+                --section-padding: 80px;
+            }
+
+            .progress-tracker {
+                gap: 1rem;
+                flex-direction: column;
+            }
+
+            .progress-arrow {
+                transform: rotate(90deg);
+            }
+
+            .progress-step {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .manager-card {
+                flex-direction: column;
+                text-align: center;
+                border-radius: 16px;
+            }
+
+            .manager-info {
+                text-align: center;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        /* ========================================
+           ACCESSIBILITY
+           ======================================== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            .scroll-indicator {
+                animation: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="cursor" id="cursor">
+        <span class="cursor-text" id="cursorText"></span>
+    </div>
+
+    <!-- Grain Texture Overlay -->
+    <div class="grain-overlay">
+        <svg class="grain-svg" xmlns="http://www.w3.org/2000/svg">
+            <filter id="noiseFilter">
+                <feTurbulence 
+                    type="fractalNoise" 
+                    baseFrequency="0.65" 
+                    numOctaves="3" 
+                    stitchTiles="stitch"
+                />
+            </filter>
+            <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+        </svg>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="container">
+            <div class="hero-content">
+                <span class="hero-label">Персональный Digital Sales Room</span>
+                
+                <h1 class="hero-title">
+                    <span class="hero-title-line">
+                        <span class="hero-title-char">А</span><span class="hero-title-char">л</span><span class="hero-title-char">е</span><span class="hero-title-char">к</span><span class="hero-title-char">с</span><span class="hero-title-char">а</span><span class="hero-title-char">н</span><span class="hero-title-char">д</span><span class="hero-title-char">р</span><span class="hero-title-char">,</span>
+                    </span>
+                    <span class="hero-title-line">
+                        <span class="hero-title-char">в</span><span class="hero-title-char">а</span><span class="hero-title-char">ш</span><span class="hero-title-char"> </span><span class="hero-title-char">п</span><span class="hero-title-char">р</span><span class="hero-title-char">о</span><span class="hero-title-char">е</span><span class="hero-title-char">к</span><span class="hero-title-char">т</span>
+                    </span>
+                    <span class="hero-title-line">
+                        <span class="hero-title-char">«</span><span class="hero-title-char">Ж</span><span class="hero-title-char">К</span><span class="hero-title-char"> </span><span class="hero-title-char">Н</span><span class="hero-title-char">е</span><span class="hero-title-char">в</span><span class="hero-title-char">с</span><span class="hero-title-char">к</span><span class="hero-title-char">и</span><span class="hero-title-char">й</span><span class="hero-title-char">»</span>
+                    </span>
+                    <span class="hero-title-line">
+                        <span class="hero-title-char text-copper">в</span><span class="hero-title-char text-copper"> </span><span class="hero-title-char text-copper">р</span><span class="hero-title-char text-copper">а</span><span class="hero-title-char text-copper">б</span><span class="hero-title-char text-copper">о</span><span class="hero-title-char text-copper">т</span><span class="hero-title-char text-copper">е</span>
+                    </span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    Благодарим за обращение. Мы уже анализируем параметры вашего объекта 
+                    и готовим детальное коммерческое предложение.
+                </p>
+
+                <!-- Progress Tracker -->
+                <div class="progress-tracker">
+                    <div class="progress-step completed">
+                        <div class="progress-indicator">
+                            <div class="progress-checkmark"></div>
+                        </div>
+                        <span class="progress-label">Первый звонок</span>
+                    </div>
+                    
+                    <span class="progress-arrow">→</span>
+                    
+                    <div class="progress-step active">
+                        <div class="progress-indicator">
+                            <div class="progress-checkmark"></div>
+                        </div>
+                        <span class="progress-label">Готовим расчёт</span>
+                    </div>
+                    
+                    <span class="progress-arrow">→</span>
+                    
+                    <div class="progress-step">
+                        <div class="progress-indicator">
+                            <div class="progress-checkmark"></div>
+                        </div>
+                        <span class="progress-label">Обсуждение КП</span>
+                    </div>
+                    
+                    <span class="progress-arrow">→</span>
+                    
+                    <div class="progress-step">
+                        <div class="progress-indicator">
+                            <div class="progress-checkmark"></div>
+                        </div>
+                        <span class="progress-label">Договор</span>
+                    </div>
+                </div>
+
+                <!-- Manager Card -->
+                <div class="manager-card">
+                    <img 
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%232A4266'/%3E%3Ccircle cx='50' cy='35' r='15' fill='%23D97722'/%3E%3Cpath d='M25 85 Q50 60 75 85 L75 100 L25 100 Z' fill='%23D97722'/%3E%3C/svg%3E" 
+                        alt="Менеджер проекта" 
+                        class="manager-avatar"
+                    >
+                    <div class="manager-info">
+                        <span class="manager-name">Михаил Ремесло</span>
+                        <span class="manager-role">Ваш персональный менеджер</span>
+                        <a href="tel:+79991234567" class="manager-contact" data-cursor-text="Позвонить">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                            </svg>
+                            +7 (999) 123-45-67
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Expected Date -->
+                <div class="expected-date">
+                    <span class="expected-date-label">Ожидаемая дата готовности</span>
+                    <span class="expected-date-value">25 декабря 2025</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="scroll-indicator">
+            <span class="scroll-indicator-text">Листайте вниз</span>
+            <div class="scroll-line"></div>
+        </div>
+
+        <!-- Accent Line -->
+        <div class="accent-line"></div>
+    </section>
+
+    <!-- Placeholder sections for future parts -->
+    <section id="social-proof" style="min-height: 100vh; background: var(--navy-primary);"></section>
+    <section id="cases" style="min-height: 100vh; background: var(--navy-dark);"></section>
+    <section id="process" style="min-height: 100vh; background: var(--navy-primary);"></section>
+    <section id="team" style="min-height: 100vh; background: var(--navy-dark);"></section>
+    <section id="cta" style="min-height: 100vh; background: var(--navy-primary);"></section>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.42/bundled/lenis.min.js"></script>
+    
+    <script>
+        // ========================================
+        // SMOOTH SCROLL (LENIS)
+        // ========================================
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            gestureDirection: 'vertical',
+            smooth: true,
+            mouseMultiplier: 1,
+            smoothTouch: false,
+            touchMultiplier: 2,
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+
+        requestAnimationFrame(raf);
+
+        // ========================================
+        // GSAP SETUP
+        // ========================================
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Sync Lenis with ScrollTrigger
+        lenis.on('scroll', ScrollTrigger.update);
+
+        gsap.ticker.add((time) => {
+            lenis.raf(time * 1000);
+        });
+
+        gsap.ticker.lagSmoothing(0);
+
+        // ========================================
+        // CUSTOM CURSOR
+        // ========================================
+        const cursor = document.getElementById('cursor');
+        const cursorText = document.getElementById('cursorText');
+
+        // Only enable custom cursor on devices with fine pointer
+        if (window.matchMedia('(pointer: fine)').matches) {
+            document.addEventListener('mousemove', (e) => {
+                gsap.to(cursor, {
+                    x: e.clientX,
+                    y: e.clientY,
+                    duration: 0.1,
+                    ease: 'power2.out'
+                });
+            });
+
+            // Add hover effect to interactive elements
+            const interactiveElements = document.querySelectorAll('a, button, [data-cursor-text]');
+            
+            interactiveElements.forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    cursor.classList.add('hovered');
+                    const text = el.getAttribute('data-cursor-text');
+                    if (text) {
+                        cursorText.textContent = text;
+                    }
+                });
+
+                el.addEventListener('mouseleave', () => {
+                    cursor.classList.remove('hovered');
+                    cursorText.textContent = '';
+                });
+            });
+        }
+
+        // ========================================
+        // HERO ANIMATION
+        // ========================================
+        const tl = gsap.timeline();
+
+        // Animate hero title characters
+        tl.to('.hero-title-char', {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.03,
+            ease: 'back.out(1.7)',
+            delay: 0.2
+        })
+        .from('.hero-subtitle', {
+            y: 30,
+            opacity: 0,
+            duration: 0.8,
+            ease: 'power3.out'
+        }, '-=0.4')
+        .from('.progress-tracker', {
+            y: 30,
+            opacity: 0,
+            duration: 0.8,
+            ease: 'power3.out'
+        }, '-=0.6')
+        .from('.manager-card', {
+            y: 30,
+            opacity: 0,
+            duration: 0.8,
+            ease: 'power3.out'
+        }, '-=0.6')
+        .from('.expected-date', {
+            y: 30,
+            opacity: 0,
+            duration: 0.8,
+            ease: 'power3.out'
+        }, '-=0.6')
+        .from('.scroll-indicator', {
+            y: 20,
+            opacity: 0,
+            duration: 1,
+            ease: 'power3.out'
+        }, '-=0.4');
+
+        // ========================================
+        // URL PARAMETER PERSONALIZATION
+        // ========================================
+        function getUrlParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Personalize content based on URL parameters
+        const clientName = getUrlParam('name') || 'Александр';
+        const projectName = getUrlParam('project') || 'ЖК «Невский»';
+        const expectedDate = getUrlParam('date') || '25 декабря 2025';
+
+        // Update hero title
+        const titleLines = document.querySelectorAll('.hero-title-line');
+        if (titleLines[0]) {
+            titleLines[0].innerHTML = Array.from(clientName).map(char => 
+                `<span class="hero-title-char">${char === ' ' ? '&nbsp;' : char}</span>`
+            ).join('');
+        }
+        if (titleLines[1] && titleLines[2]) {
+            const fullProjectText = `ваш проект «${projectName.replace(/[«»]/g, '')}»`;
+            const combinedLine = fullProjectText.split('').map(char => 
+                `<span class="hero-title-char">${char === ' ' ? '&nbsp;' : char}</span>`
+            ).join('');
+            titleLines[1].outerHTML = `<span class="hero-title-line">${combinedLine}</span>`;
+            titleLines[2].remove();
+            titleLines[3].remove();
+        }
+
+        // Update expected date
+        const dateValue = document.querySelector('.expected-date-value');
+        if (dateValue) {
+            dateValue.textContent = expectedDate;
+        }
+
+        // Re-animate after personalization
+        setTimeout(() => {
+            const newChars = document.querySelectorAll('.hero-title-char');
+            gsap.set(newChars, { y: '100%', opacity: 0 });
+            
+            gsap.to(newChars, {
+                y: 0,
+                opacity: 1,
+                duration: 0.8,
+                stagger: 0.03,
+                ease: 'back.out(1.7)',
+                delay: 0.2
+            });
+        }, 100);
+
+        // ========================================
+        // CONSOLE INFO
+        // ========================================
+        console.log('%c ГК РЕМЕСЛО | Digital Sales Room ', 'background: #D97722; color: #0F1D33; font-size: 16px; font-weight: bold; padding: 10px 20px;');
+        console.log('%c Персонализированная прогревочная страница для тёплых лидов ', 'color: #A8B4C4; font-size: 12px;');
+        console.log('%c Часть 1 из 4: Базовая структура и Hero-секция ', 'color: #D97722; font-size: 12px; font-weight: bold;');
+    </script>
+</body>
+</html>
