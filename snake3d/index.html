@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SERPENTINE — 3D Snake Reborn</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>" />
+</head>
+<body>
+  <canvas id="gl"></canvas>
+
+  <!-- ============ HUD ============ -->
+  <div id="hud-layer">
+    <div class="hud-top-left">
+      <div class="hud-score-label">Очки</div>
+      <div class="hud-score" id="hud-score">0</div>
+      <div class="hud-stats">
+        <span>Длина: <b id="hud-length">8</b></span>
+        <span>Комбо: <b id="combo-mini">—</b></span>
+      </div>
+    </div>
+    <div class="hud-top-center">
+      <div class="hud-level" id="hud-level-name">Сад</div>
+      <div class="target-bar"><div class="target-bar-fill" id="target-fill"></div></div>
+      <div class="hud-eaten">Собрано плодов: <span id="hud-eaten">0/12</span></div>
+    </div>
+    <div class="hud-top-right">
+      <div class="hud-time" id="hud-time">0:00</div>
+      <canvas id="minimap" width="130" height="130"></canvas>
+    </div>
+    <div id="hud-hearts">
+      <span class="heart">❤️</span><span class="heart">❤️</span><span class="heart">❤️</span>
+    </div>
+    <div id="dash-orb"><div id="dash-fill"></div></div>
+    <div class="dash-label">РЫВОК · SHIFT</div>
+    <div id="food-arrow-wrap">
+      <div id="food-arrow">▲</div>
+      <div id="food-dist"></div>
+    </div>
+    <div id="hud-combo"></div>
+    <div class="crosshair"></div>
+  </div>
+
+  <div class="vignette"></div>
+  <div class="scanlines"></div>
+  <div id="damage-flash"></div>
+  <div id="heal-flash"></div>
+  <div id="toasts"></div>
+
+  <!-- ============ ГЛАВНОЕ МЕНЮ ============ -->
+  <div class="screen active" id="main-menu">
+    <div class="logo-wrap">
+      <span class="logo-snake">🐍</span>
+      <h1 class="logo">SERPENTINE</h1>
+      <div class="logo-sub">3D · Snake Reborn · от первого лица</div>
+    </div>
+    <div class="menu-buttons">
+      <button class="btn big" id="btn-play">Начать путешествие</button>
+      <button class="btn secondary" id="btn-levels">Выбор уровня</button>
+      <button class="btn secondary" id="btn-settings">Настройки</button>
+    </div>
+    <div class="hint">
+      <b>ЛКМ / A,D</b> — поворот · <b>W</b> — ускорение · <b>Space</b> — рывок · <b>Esc</b> — пауза · <b>H</b> — подсказка<br/>
+      Пройдите 8 миров, соберите все плоды и станьте Великим Змеем
+    </div>
+  </div>
+
+  <!-- ============ ВЫБОР УРОВНЯ ============ -->
+  <div class="screen" id="level-screen">
+    <div class="level-select-title">ВЫБОР МИРА</div>
+    <div class="level-select" id="level-select"></div>
+    <button class="btn secondary" id="btn-back-levels" style="margin-top:26px">Назад</button>
+  </div>
+
+  <!-- ============ НАСТРОЙКИ ============ -->
+  <div class="screen" id="settings-screen">
+    <div class="panel-title">НАСТРОЙКИ</div>
+    <div class="settings-panel">
+      <div class="setting-row"><span>Громкость</span><input type="range" id="set-vol" min="0" max="100" value="90" /></div>
+      <div class="setting-row"><span>Чувствительность поворота</span><input type="range" id="set-sens" min="20" max="200" value="100" /></div>
+      <div class="setting-row"><span>Качество графики</span>
+        <select id="set-quality" style="padding:6px 12px;background:#0d1420;color:#ffd76a;border:1px solid rgba(255,215,106,.25);border-radius:6px;font-family:inherit">
+          <option value="high">Высокое</option><option value="medium">Среднее</option><option value="low">Низкое</option>
+        </select>
+      </div>
+      <div class="setting-row"><span>Инверсия вида мышью</span><input type="checkbox" id="set-invert" /></div>
+      <div class="setting-row"><span>Тряска камеры</span><input type="checkbox" id="set-shake" checked /></div>
+    </div>
+    <button class="btn" id="btn-back-settings" style="margin-top:24px">Готово</button>
+  </div>
+
+  <!-- ============ ИНТРО УРОВНЯ ============ -->
+  <div class="screen" id="level-intro">
+    <div class="intro-icon" id="intro-icon">🌿</div>
+    <div class="intro-num" id="intro-num">УРОВЕНЬ 1</div>
+    <div class="intro-name" id="intro-name">ЗАБРОШЕННЫЙ САД</div>
+    <div class="intro-desc" id="intro-desc"></div>
+    <div class="intro-mechanic" id="intro-mechanic"></div>
+    <div class="intro-countdown">Скользя по ветру, вы просыпаетесь… [клик или любая клавиша]</div>
+  </div>
+
+  <!-- ============ ПАУЗА ============ -->
+  <div class="screen" id="pause-screen">
+    <div class="panel-title">ПАУЗА</div>
+    <div class="settings-panel" style="min-width:340px">
+      <div class="setting-row"><span>Громкость</span><input type="range" id="pause-vol" min="0" max="100" value="90" /></div>
+      <div class="setting-row"><span>Чувствительность</span><input type="range" id="opt-sensitivity" min="20" max="200" value="100" /></div>
+      <div class="setting-row"><span>Графика</span>
+        <select id="opt-quality" style="padding:6px 12px;background:#0d1420;color:#ffd76a;border:1px solid rgba(255,215,106,.25);border-radius:6px;font-family:inherit">
+          <option value="high">Высокое</option><option value="medium">Среднее</option><option value="low">Низкое</option>
+        </select>
+      </div>
+      <div class="setting-row"><span>Инверсия мыши</span><input type="checkbox" id="opt-invert" /></div>
+    </div>
+    <button class="btn" id="btn-resume">Продолжить</button>
+    <button class="btn secondary" id="btn-restart-level">Заново</button>
+    <button class="btn danger" id="btn-quit">В меню</button>
+  </div>
+
+  <!-- ============ УРОВЕНЬ ПРОЙДЕН ============ -->
+  <div class="screen" id="level-complete">
+    <div class="panel-title" id="lc-title">УРОВЕНЬ ПРОЙДЕН</div>
+    <div class="rank rank-s" id="lc-rank">S</div>
+    <div class="stats-table">
+      <div class="stat-row"><span>Плоды</span><span class="v" id="lc-base">0</span></div>
+      <div class="stat-row"><span>Бонус длины</span><span class="v" id="lc-len">+0</span></div>
+      <div class="stat-row"><span>Бонус времени</span><span class="v" id="lc-time">+0</span></div>
+      <div class="stat-row"><span>Макс. комбо</span><span class="v" id="lc-combo">+0</span></div>
+      <div class="stat-row"><span>Идеальное прохождение</span><span class="v" id="lc-perfect">—</span></div>
+      <div class="stat-row total"><span>ИТОГО</span><span class="v" id="lc-total">0</span></div>
+    </div>
+    <button class="btn big" id="btn-next-level"><span id="lc-next-label">СЛЕДУЮЩИЙ УРОВЕНЬ</span> →</button>
+    <button class="btn secondary" id="btn-replay">Переиграть</button>
+  </div>
+
+  <!-- ============ GAME OVER ============ -->
+  <div class="screen" id="game-over">
+    <div class="go-skull">💀</div>
+    <div class="panel-title">ЗМЕЯ ПОГИБЛА</div>
+    <div class="death-reason" id="go-reason">Вы врезались в стену</div>
+    <div class="stats-table">
+      <div class="stat-row"><span>Уровень</span><span class="v" id="go-level">—</span></div>
+      <div class="stat-row"><span>Счёт</span><span class="v" id="go-score">0</span></div>
+      <div class="stat-row"><span>Длина</span><span class="v" id="go-length">0</span></div>
+      <div class="stat-row"><span>Плоды</span><span class="v" id="go-eaten">0/0</span></div>
+    </div>
+    <button class="btn big" id="btn-go-retry">Попробовать снова</button>
+    <button class="btn secondary" id="btn-go-menu">В меню</button>
+  </div>
+
+  <!-- ============ ПОБЕДА ============ -->
+  <div class="screen" id="victory-screen">
+    <span class="logo-snake" style="font-size:70px">🌌</span>
+    <h1 class="logo" style="font-size:clamp(38px,6vw,72px)">ВЕЛИКИЙ ЗМЕЙ</h1>
+    <div class="logo-sub">Все 8 миров пройдены. Созвездие Змеи рождено.</div>
+    <div class="final-tally" style="margin-top:26px">Итоговый счёт: <b id="final-score">0</b></div>
+    <button class="btn big" id="btn-vic-menu">В меню</button>
+    <button class="btn secondary" id="btn-vic-replay">Пройти заново</button>
+  </div>
+
+  <!-- ============ ОБУЧЕНИЕ (первый запуск) ============ -->
+  <div class="screen" id="tutorial-screen">
+    <div class="panel-title">ИНСТИНКТЫ ЗМЕИ</div>
+    <div class="settings-panel" style="min-width:520px;max-width:640px">
+      <div class="stat-row"><span>🧭 Движение</span><span class="v">Мышь / A·D / ←→ — змея скользит сама</span></div>
+      <div class="stat-row"><span>⚡ Рывок</span><span class="v">Space — молниеносный бросок</span></div>
+      <div class="stat-row"><span>🍎 Плоды</span><span class="v">Стрелка внизу подскажет направление</span></div>
+      <div class="stat-row"><span>✨ Золотые</span><span class="v">×5 очков и энергия — берегите их!</span></div>
+      <div class="stat-row"><span>☠️ Ядовитые</span><span class="v">Замедляют и туманят разум</span></div>
+      <div class="stat-row"><span>❤️ Жизни</span><span class="v">3 сердца. Стены и враги их отнимают</span></div>
+      <div class="stat-row"><span>🏆 Цель</span><span class="v">Съешьте все плоды уровня за отведённое время</span></div>
+    </div>
+    <button class="btn big" id="btn-tutorial-go">Ползти!</button>
+  </div>
+
+  <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
